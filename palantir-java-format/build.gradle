@@ -71,6 +71,11 @@ tasks.withType(Javadoc).configureEach {
 
     if (JavaVersion.current() < JavaVersion.VERSION_14) {
         exclude '**/Java14InputAstVisitor.java'
+
+    }
+
+    if (JavaVersion.current() < JavaVersion.VERSION_18) {
+        exclude '**/Java19InputAstVisitor.java'
     }
 }
 
@@ -85,7 +90,7 @@ tasks.test {
 
 // necessary to compile Java14InputAstVisitor
 idea {
-    module.languageLevel = new org.gradle.plugins.ide.idea.model.IdeaLanguageLevel(14)
+    module.languageLevel = new org.gradle.plugins.ide.idea.model.IdeaLanguageLevel(19)
 }
 
 // This block may be replaced by BaselineExportsExtension exports
