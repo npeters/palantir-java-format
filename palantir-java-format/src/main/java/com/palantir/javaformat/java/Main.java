@@ -40,6 +40,7 @@ public final class Main {
     private static final int MAX_THREADS = 20;
     private static final String STDIN_FILENAME = "<stdin>";
 
+
     static String versionString() {
         return "palantir-java-format: Version " + Main.class.getPackage().getImplementationVersion();
     }
@@ -149,8 +150,8 @@ public final class Main {
                 } else {
                     errWriter.println(path + ": error: "
                             + Optional.ofNullable(e.getCause())
-                                    .map(Throwable::getMessage)
-                                    .orElse("null"));
+                            .map(Throwable::getMessage)
+                            .orElse("null"));
                     Optional.ofNullable(e.getCause()).ifPresent(cause -> cause.printStackTrace(errWriter));
                 }
                 allOk = false;

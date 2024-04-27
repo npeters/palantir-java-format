@@ -87,6 +87,17 @@ def exports = [
 def jvmArgList = exports.collect { value -> "--add-exports=${value}=ALL-UNNAMED".toString() }
 
 
+java {
+    sourceCompatibility = 21
+    targetCompatibility = 21
+}
+
+
+tasks.named("compileJava", JavaCompile) {
+    sourceCompatibility = 11
+    targetCompatibility = 11
+}
+
 tasks.named("compileMain21Java", JavaCompile) {
     dependsOn("compileJava")
 
@@ -96,10 +107,17 @@ tasks.named("compileMain21Java", JavaCompile) {
         languageVersion = JavaLanguageVersion.of(21)
     }
 
+    options.compilerArgs += jvmArgList
+
     // only one destinationDirectory for the project
-    destinationDirectory = sourceSets["main"].java.destinationDirectory
+    //destinationDirectory = sourceSets["main"].java.destinationDirectory
     // add dependency with the sourceset main
-    classpath = sourceSets["main21"].compileClasspath.plus(layout.files(tasks.getAt("compileJava").outputs.getFiles().getFiles()))
+
+
+    //classpath = sourceSets["main21"].compileClasspath.plus(layout.files(tasks.getAt("compileJava").outputs.getFiles().getFiles()))
+    //source = sourceSets.main.allJava.plus(layout.files(sourceSets["main21"].allJava.files))
+    //classpath += files(sourceSets.main.allJava.getClassesDirectory())
+    classpath = sourceSets["main21"].compileClasspath.plus(layout.files(tasks.getAt("compileJava").outputs.getFiles()))
 
 }
 
@@ -126,16 +144,12 @@ tasks.named("testClasses") {
 }
 
 
-//tasks.named("jar"){
-//    dependsOn("compileMain21Java")
-//}
-
-
 tasks.withType(JavaCompile).configureEach {
     config ->
         {
 
             def currentLanguageVersion = config.javaCompiler.get().getMetadata().languageVersion.asInt()
+
 
             options.errorprone.disable 'StrictUnusedVariable'
 
@@ -164,6 +178,24 @@ tasks.withType(Test).configureEach {
     if (it.javaVersion.getMajorVersion() == "21") {
         jvmArgs += "--enable-preview"
     }
+}
+//
+tasks.register("test21",Test) {
+
+    println(JavaVersion.current().toString())
+    javaLauncher.set(
+            javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(21)
+            }.get()
+    )
+
+    dependsOn("compileTest21Java")
+    useJUnitPlatform()
+
+    systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+    testClassesDirs = sourceSets["test"].output.getClassesDirs().plus(layout.files(sourceSets["test21"].output.getClassesDirs()))
+    println("test21 ------------------" + testClassesDirs.getFiles())
+
 }
 
 
@@ -199,4 +231,7 @@ tasks.named("jar", Jar) {
     manifest {
         attributes('Add-Exports': exports.join(' '))
     }
+    dependsOn("compileMain21Java", "classes")
+    from(sourceSets.main.output)
+    from(sourceSets["main21"].output)
 }

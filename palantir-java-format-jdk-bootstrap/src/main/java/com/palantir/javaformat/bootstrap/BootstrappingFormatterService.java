@@ -94,7 +94,8 @@ public final class BootstrappingFormatterService implements FormatterService {
         if (output.isEmpty() || output.get().isEmpty()) {
             return ImmutableList.of();
         }
-        return MAPPER.readValue(output.get(), new TypeReference<>() {});
+        return MAPPER.readValue(output.get(), new TypeReference<>() {
+        });
     }
 
     private String runFormatterCommand(String input) throws IOException {
@@ -167,7 +168,8 @@ public final class BootstrappingFormatterService implements FormatterService {
                             "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
                             "--add-exports", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
                             "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
-                            "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
+                            "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+                            "--enable-preview");
                 }
                 return this;
             }

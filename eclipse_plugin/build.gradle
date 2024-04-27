@@ -29,6 +29,10 @@ dependencies {
     implementation project(':palantir-java-format')
 }
 
+tasks.named("compileJava"){
+    dependsOn(":palantir-java-format:compileMain21Java")
+}
+
 tasks.named("jar", Jar) {
     archiveBaseName = 'palantir-java-format-eclipse-plugin'
     manifest {
