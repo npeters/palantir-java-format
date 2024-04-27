@@ -1,5 +1,20 @@
-rootProject.name = 'palantir-java-format-parent'
+plugins {
+    id("org.gradle.toolchains.foojay-resolver") version "0.7.0"
+}
 
+
+toolchainManagement {
+    jvm {
+        javaRepositories {
+            repository("foojay") {
+                resolverClass = org.gradle.toolchains.foojay.FoojayToolchainResolver
+            }
+        }
+    }
+}
+
+
+rootProject.name = 'palantir-java-format-parent'
 include ':gradle-palantir-java-format'
 include ':eclipse_plugin'
 include ':idea-plugin'
@@ -13,3 +28,4 @@ buildCache {
         enabled = !isCiServer
     }
 }
+

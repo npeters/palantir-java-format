@@ -154,7 +154,6 @@ tasks.withType(JavaCompile).configureEach {
                 options.compilerArgs += "--enable-preview"
                 includes = ['**/java/java21/*.java']
                 excludes = ['**/java/JavaInputAstVisitor.java']
-                println(classpath.files)
             }
         }
 }
