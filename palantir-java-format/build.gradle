@@ -5,9 +5,53 @@ mainClassName = 'com.palantir.javaformat.java.Main'
 
 description = 'Palantir Java Format'
 
+
+configurations {
+    main21Implementation.extendsFrom(implementation)
+    main21RuntimeClasspath.extendsFrom(runtimeClasspath)
+    main21CompileOnly.extendsFrom(compileOnly)
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+    main21 {
+        java {
+            srcDirs = ['src/main/java21']
+        }
+        resources {
+            srcDirs = ['src/main/resources21']
+        }
+    }
+    test21 {
+        java {
+            srcDirs = ['src/test/java21']
+        }
+        resources {
+            srcDirs = ['src/test/resources21']
+        }
+    }
+}
+
+
 dependencies {
     api project(':palantir-java-format-spi')
     api 'com.google.guava:guava'
+
     implementation 'org.functionaljava:functionaljava'
     implementation 'com.fasterxml.jackson.core:jackson-core'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -42,22 +86,90 @@ def exports = [
 
 def jvmArgList = exports.collect { value -> "--add-exports=${value}=ALL-UNNAMED".toString() }
 
-tasks.withType(JavaCompile).configureEach {
-    options.errorprone.disable 'StrictUnusedVariable'
 
-    // Allow access to internal javac apis
-    options.compilerArgs += jvmArgList
+tasks.named("compileMain21Java", JavaCompile) {
+    dependsOn("compileJava")
 
-    if (JavaVersion.current() < JavaVersion.VERSION_14) {
-        excludes = ['**/Java14InputAstVisitor.java']
+    sourceCompatibility = 21
+    targetCompatibility = 21
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+
+    // only one destinationDirectory for the project
+    destinationDirectory = sourceSets["main"].java.destinationDirectory
+    // add dependency with the sourceset main
+    classpath = sourceSets["main21"].compileClasspath.plus(layout.files(tasks.getAt("compileJava").outputs.getFiles().getFiles()))
+
+}
+
+tasks.named("compileTest21Java", JavaCompile) {
+    dependsOn("compileTestJava")
+    sourceCompatibility = 21
+    targetCompatibility = 21
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
-tasks.withType(Test).configureEach {
-    jvmArgs = jvmArgList
+
+tasks.named("compileTestJava") {
+    dependsOn("compileMain21Java")
 }
 
+tasks.named("classes") {
+    dependsOn("compileMain21Java")
+}
+
+tasks.named("testClasses") {
+    dependsOn("compileTest21Java")
+}
+
+
+//tasks.named("jar"){
+//    dependsOn("compileMain21Java")
+//}
+
+
+tasks.withType(JavaCompile).configureEach {
+    config ->
+        {
+
+            def currentLanguageVersion = config.javaCompiler.get().getMetadata().languageVersion.asInt()
+
+            options.errorprone.disable 'StrictUnusedVariable'
+
+            // Allow access to internal javac apis
+            options.compilerArgs += jvmArgList
+
+
+            if (currentLanguageVersion < 14) {
+                excludes = ['**/java14/*.java', '**/java21/*.java']
+            }
+            if (14 < currentLanguageVersion && currentLanguageVersion < 21) {
+                excludes = ['**/java21/*.java']
+            }
+
+            if (21 <= currentLanguageVersion) {
+                options.compilerArgs += "--enable-preview"
+                includes = ['**/java/java21/*.java']
+                excludes = ['**/java/JavaInputAstVisitor.java']
+                println(classpath.files)
+            }
+        }
+}
+
+
+tasks.withType(Test).configureEach {
+    jvmArgs = jvmArgList
+    if (it.javaVersion.getMajorVersion() == "21") {
+        jvmArgs += "--enable-preview"
+    }
+}
+
+
 tasks.withType(Javadoc).configureEach {
+    dependsOn("compileMain21Java")
     // Allow access to internal javac apis
     options.optionFiles << file('../gradle/javadoc.options')
 
